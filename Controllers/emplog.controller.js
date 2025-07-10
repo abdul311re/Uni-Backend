@@ -1,48 +1,34 @@
-const Auth = require("../Models/auth.model");
 const bcrypt = require("bcrypt");
+const Auth = require("../Models/auth.model");
 
-exports.loginEmployee = async (req, res) => {
+exports.login = async (req, res) => {
+  const { username, password } = req.body;
+  console.log("Login attempt:", username, password);
+
   try {
-    const { username, password } = req.body;
+    const user = await Auth.findByUsername(username);
 
-    const cleanUsername = username.trim();
-    const cleanPassword = password.trim();
-
-    console.log(`Login attempt: ${cleanUsername} ${cleanPassword}`);
-    console.log(`Entered password (plaintext): ${cleanPassword}`);
-
-    // convert callback to promise
-    const user = await new Promise((resolve, reject) => {
-      Auth.findByUsername(cleanUsername, (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
-    });
-    console.log(user)
     if (!user) {
-      console.log(`User ${cleanUsername} not found`);
-      return res.status(401).json({ success: false, message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    console.log(`DB hash for ${cleanUsername}: ${user.password}`);
-
-    bcrypt.compare(cleanPassword, user.password, (error) => console.log("\n"+error));
-    
-    const match = await bcrypt.compare(cleanPassword, user.password);
-    console.log(`bcrypt.compare(${cleanPassword}, ${user.password}) result: ${match}`);
-
-    if (!match) {
-      console.log(`Invalid password for user: ${cleanUsername}`);
-      return res.status(401).json({ success: false, message: "Invalid password" });
+     
+    const isMatch = await bcrypt.compare(password.trim(), user.password.trim());
+    console.log("Input password:", password);
+    console.log("DB password:", user.password);
+    console.log("Password is match:", isMatch);
+    if(password === user.password){
+      console.log("correct")
+    }else{
+      console.log("natcho false")
+    }
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
     }
 
-    res.json({
-      success: true,
-      id: user.employeeId,
-      username: user.username
-    });
-  } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(200).json({ message: "Login successful", user, success: true });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };

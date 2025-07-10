@@ -3,12 +3,13 @@ module.exports = function(app) {
     const employeeRoutes = require('./employee.route');
     const attendenceRoutes = require("./attendence.route");
     const emplogRoutes = require("./emplog.route")
+    const projectRoutes = require("./projects.route")
 
     app.use("/api/v1/auth", emplogRoutes);
     app.use("/api/v1/attendence", attendenceRoutes);    
     // Mount routes with a prefix
     app.use('/api/v1/employees', employeeRoutes);
-
+    app.use('/api/v1/projects', projectRoutes);
     // Health check route
     app.get('/api/v1/health', (req, res) => {
         res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });

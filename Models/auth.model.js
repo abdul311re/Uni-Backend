@@ -48,19 +48,21 @@ Auth.getAll = function (result) {
 };
 
 // ✅ Get Auth by Username
-Auth.findByUsername = function (username, result) {
-  dbConn.query(
-    "SELECT * FROM employee_auth WHERE username = ?",
-    [username],
-    function (err, res) {
-      if (err) {
-        console.log("❌ Error in GET BY USERNAME:", err);
-        result(err, null);
-      } else {
-        result(null, res[0]);
+Auth.findByUsername = function (username) {
+  return new Promise((resolve, reject) => {
+    dbConn.query(
+      "SELECT * FROM employee_auth WHERE username = ?",
+      [username],
+      function (err, res) {
+        if (err) {
+          console.log("❌ Error in GET BY USERNAME:", err);
+          reject(err);
+        } else {
+          resolve(res[0]); // First user (or undefined)
+        }
       }
-    }
-  );
+    );
+  });
 };
 
 // ✅ Update Auth by ID
