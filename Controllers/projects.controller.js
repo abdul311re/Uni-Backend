@@ -1,48 +1,81 @@
-const { createProject, assignEmployeesToProject } = require("../Models/projects.model");
-const db = require("../config/db.config");
-const createNewProject = async (req, res) => {
-  const {
-    projectName,
-    clientName,
-    clientEmail,
-    clientPhone,
-    city,
-    budget,
-    startDate,
-    dueDate,
-    details,
-    projectType,
-    assignedEmployees,
-  } = req.body;
+const Project = require("../Models/projects.model");
 
-  const conn = await db.getConnection();
+exports.create = (req, res) => {
+  const { employees, ...projectData } = req.body;
 
-  try {
-    await conn.beginTransaction();
-
-    const projectId = await createProject({
-      projectName,
-      clientName,
-      clientEmail,
-      clientPhone,
-      city,
-      budget,
-      startDate,
-      dueDate,
-      details,
-      projectType,
-    });
-
-    await assignEmployeesToProject(projectId, assignedEmployees);
-
-    await conn.commit();
-    res.json({ success: true, projectId });
-  } catch (err) {
-    await conn.rollback();
-    console.error(err);
-    res.status(500).send("Error creating project");
-  } finally {
-    conn.release();
+  if (!projectData.projectName || !projectData.clientName) {
+    return res.status(400).json({ message: "Missing required fields." });
   }
+
+  Project.createProject(projectData, employees, (err, data) => {
+    if (err) return res.status(500).json({ message: "Failed to create project", error: err });
+    res.status(201).json(data);
+  });
 };
-module.exports = {createNewProject};
+
+exports.findAll = (req, res) => {
+  Project.findAll((err, data) => {
+    if (err) return res.status(500).json({ message: "Error retrieving projects", error: err });
+    res.json(data);
+  });
+};
+
+exports.findById = (req, res) => {
+  Project.findById(req.params.id, (err, data) => {
+    if (err) {
+      if (err.kind === "not_found") return res.status(404).json({ message: "Project not found" });
+      return res.status(500).json({ message: "Error retrieving project", error: err });
+    }
+    res.json(data);
+  });
+};
+
+exports.updateById = (req, res) => {
+  Project.updateById(req.params.id, req.body, (err, data) => {
+    if (err) return res.status(500).json({ message: "Update failed", error: err });
+    res.json(data);
+  });
+};
+
+exports.delete = (req, res) => {
+  Project.delete(req.params.id, (err, data) => {
+    if (err) {
+      if (err.kind === "not_found") return res.status(404).json({ message: "Project not found" });
+      return res.status(500).json({ message: "Error deleting project", error: err });
+    }
+    res.json({ message: "Project deleted successfully" });
+  });
+};
+
+exports.getPending = (req, res) => {
+  Project.getPendingProjects((err, data) => {
+    if (err) return res.status(500).json({ message: "Failed to fetch pending projects", error: err });
+    res.json(data);
+  });
+};
+
+exports.getCompleted = (req, res) => {
+  Project.getCompletedProjects((err, data) => {
+    if (err) return res.status(500).json({ message: "Failed to fetch completed projects", error: err });
+    res.json(data);
+  });
+};
+
+exports.getStopped = (req, res) => {
+  Project.getStoppedProjects((err, data) => {
+    if (err) return res.status(500).json({ message: "Failed to fetch stopped projects", error: err });
+    res.json(data);
+  });
+};
+
+exports.getstatusProjectByIdWithTeam = (req, res) => {
+  const { id, status } = req.params;
+
+  Project.getProjectByIdAndStatus(id, status, (err, data) => {
+    if (err) {
+      if (err.kind === "not_found") return res.status(404).json({ message: "Project not found" });
+      return res.status(500).json({ message: "Error fetching project by ID & status", error: err });
+    }
+    res.json(data);
+  });
+};

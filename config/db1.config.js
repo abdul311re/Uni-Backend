@@ -1,12 +1,26 @@
-const mysql = require("mysql2/promise");
+'use strict';
+const mysql = require('mysql2/promise'); // ✅ Use promise wrapper
 
-const connectDB = async () => {
-  return await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "hrm_system",
-  });
-};
+// Create promise-based connection pool
+const dbConn = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'hrm_system',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-module.exports = connectDB;
+// Optional: check connection on startup
+(async () => {
+  try {
+    const connection = await dbConn.getConnection();
+    console.log("✅ Database Connected!");
+    connection.release();
+  } catch (err) {
+    console.error("❌ Database connection failed:", err.message);
+  }
+})();
+
+module.exports = dbConn;

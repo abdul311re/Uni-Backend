@@ -6,8 +6,14 @@ const bodyParser = require("body-parser");
 const app = express();
 const corsOptions = {
   origin: [
-    "http://localhost:3001", 
-    "http://localhost:3002",      // Common development origin
+    "http://localhost:3005",       // React default port
+    "http://192.168.10.19:3005",   // React on your IP
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://192.168.10.19:3001",
+    "http://192.168.100.23:3001",
+    "http://192.168.100.23:3005",
+    "http://192.168.100.23:3000",
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Include OPTIONS
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -15,7 +21,7 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(bodyParser.json());
-app.use(cors(corsOptions));
+app.use(cors(corsOptions));~
 
 // Handle preflight requests
 app.options("*", cors(corsOptions));
@@ -46,6 +52,6 @@ app.use((err, req, res, next) => {
 });
 
 // Listen for requests
-app.listen(port, () => {
+app.listen(port, '0.0.0.0',() => {
   console.log(`Server is listening on port ${port}`);
 });

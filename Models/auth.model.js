@@ -105,5 +105,46 @@ Auth.deleteByEmployeeId = function (employeeId, result) {
   );
 };
 
+// ✅ Login Method: Compare password
+Auth.login = async function (username, password) {
+  return new Promise((resolve, reject) => {
+    dbConn.query(
+      "SELECT * FROM employee_auth WHERE username = ?",
+      [username],
+      async function (err, res) {
+        if (err) {
+          console.log("❌ Error during login query:", err);
+          return reject(err);
+        }
+
+        if (res.length === 0) {
+          return resolve({ success: false, message: "User not found" });
+        }
+
+        const user = res[0];
+
+        // ✅ Log for debug
+        console.log("🔍 Username:", username);
+        console.log("🔑 Entered Password:", password);
+        console.log("🛡️ Stored Hashed Password:", user.password);
+
+        const isMatch = await bcrypt.compare(password, user.password).then(console.log);
+
+        if (!isMatch) {
+          return resolve({ success: false, message: "Incorrect password" });
+        }
+
+        return resolve({
+          success: true,
+          message: "Login successful",
+          user: {
+            id: user.id,
+            username: user.username,
+          },
+        });
+      }
+    );
+  });
+};
 
 module.exports = Auth;
